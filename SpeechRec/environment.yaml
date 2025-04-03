@@ -1,0 +1,14 @@
+name: speechrec
+channels:
+  - conda-forge
+dependencies:
+  - python=3.9
+  - numpy
+  - opencv
+  - pyautogui
+  - pytesseract
+  - speechrecognition
+  - pygetwindow
+  - pip
+  - pip:
+      - difflib
