@@ -4,11 +4,12 @@ import time
 import pyautogui
 import numpy as np
 import pytesseract
-from difflib import SequenceMatcher  # For better text matching
+from difflib import SequenceMatcher 
 
 
-ICON_FOLDER = r"C:\Users\Aidan\Desktop\Chrome Icons"
-SEARCH_BAR_FOLDER = r"C:\Users\Aidan\Desktop\Chrome Icons\SearchBars"
+ICON_FOLDER = r"C:\Users\aidan\OneDrive\Desktop\SpeechRec\Chrome Icons"
+SEARCH_BAR_FOLDER = r"C:\Users\aidan\OneDrive\Desktop\SpeechRec\Chrome Icons\SearchBars"
+pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
 def find_search_bar(confidence=0.79):
     """Detects the search bar using multiple example images."""
@@ -23,11 +24,16 @@ def find_search_bar(confidence=0.79):
         icon_path = os.path.join(SEARCH_BAR_FOLDER, image_file)
         icon = cv2.imread(icon_path, cv2.IMREAD_GRAYSCALE)
         if icon is None:
-            continue
-
+            raise ValueError("Template image (search bar icon) not found or could not be loaded.")
+        if screen_gray is None:
+            raise ValueError("Screenshot capture failed. Ensure that the screen is being captured correctly.") 
+        if icon.shape[0] > screen_gray.shape[0] or icon.shape[1] > screen_gray.shape[1]:
+            scale_factor = min(screen_gray.shape[0] / icon.shape[0], screen_gray.shape[1] / icon.shape[1])
+            icon = cv2.resize(icon, (0, 0), fx=scale_factor, fy=scale_factor)       
         result = cv2.matchTemplate(screen_gray, icon, cv2.TM_CCOEFF_NORMED)
         min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
-
+        print("Screenshot size:", screen_gray.shape)
+        print("Template size:", icon.shape)
         if max_val > confidence and max_val > highest_confidence:
             highest_confidence = max_val
             best_match = (max_loc[0] + icon.shape[1] // 2, max_loc[1] + icon.shape[0] // 2)
@@ -66,12 +72,12 @@ def find_all_icons_on_screen(icon_path, confidence=0.8):
         return []
 
     detected_positions = []
-    for scale in np.linspace(0.9, 1.1, 5):  # Narrow scale range to prevent duplicates
+    for scale in np.linspace(0.9, 1.1, 5):
         resized_icon = cv2.resize(icon, None, fx=scale, fy=scale)
         result = cv2.matchTemplate(screen_gray, resized_icon, cv2.TM_CCOEFF_NORMED)
         
         locations = np.where(result >= confidence)
-        for pt in zip(*locations[::-1]):  # Reverse to (x, y)
+        for pt in zip(*locations[::-1]): 
             detected_positions.append((pt[0] + resized_icon.shape[1] // 2, pt[1] + resized_icon.shape[0] // 2))
 
     detected_positions = filter_duplicates(detected_positions)
@@ -94,7 +100,7 @@ def validate_chrome_window(x, y):
 def preprocess_icon(icon_path):
     """Loads and preprocesses an icon (grayscale + edge detection)."""
     icon = cv2.imread(icon_path, cv2.IMREAD_GRAYSCALE)
-    icon = cv2.Canny(icon, 50, 200)  # Apply edge detection
+    icon = cv2.Canny(icon, 50, 200)
     return icon
 
 def find_icon_on_screen(icon_path, confidence=0.8):
@@ -111,7 +117,7 @@ def find_icon_on_screen(icon_path, confidence=0.8):
         print(f"ERROR: Could not load icon image from {icon_path}")
         return None
 
-    for scale in np.linspace(0.8, 1.3, 10):  # Try different sizes
+    for scale in np.linspace(0.8, 1.3, 10): 
         resized_icon = cv2.resize(icon, None, fx=scale, fy=scale)
         result = cv2.matchTemplate(screen_gray, resized_icon, cv2.TM_CCOEFF_NORMED)
 
@@ -130,11 +136,9 @@ def click_on_icon(icon_name):
     print(icon_name)
     """Finds and clicks an icon with improved detection."""
     
-    # Ensure .png extension is added if missing
     if not icon_name.endswith(".png"):
         icon_name += ".png"
 
-    # Debug: Show the full path being checked
     icon_path = os.path.join(ICON_FOLDER, icon_name)
     print(icon_path)
     print(f"Attempting to find icon: '{icon_name}'")
@@ -179,7 +183,7 @@ def extract_text_positions(detected_text):
     link_positions = []
     for i, text in enumerate(detected_text["text"]):
         clean_text = text.lower().strip()
-        if clean_text and len(clean_text) > 2:  # Ignore very short words
+        if clean_text and len(clean_text) > 2:
             x, y, w, h = (detected_text["left"][i], detected_text["top"][i], 
                           detected_text["width"][i], detected_text["height"][i])
             link_positions.append((clean_text, x + w // 2, y + h // 2))
@@ -197,8 +201,6 @@ def normalize_text(text):
 def detect_text(screen_np):
     """Detects all text in an image using optimized OCR settings."""
     gray = cv2.cvtColor(screen_np, cv2.COLOR_RGB2GRAY)
-
-    # Use Tesseract OCR with improved settings
     custom_config = r'--oem 3 --psm 6'
     detected_text = pytesseract.image_to_data(gray, config=custom_config, output_type=pytesseract.Output.DICT)
     
@@ -233,7 +235,6 @@ def click_link(target_text, timeout=5):
             print("No links detected.")
             return False
 
-        # Sort links by similarity
         links.sort(key=lambda item: similar(normalized_target, normalize_text(item[0])), reverse=True)
         
         best_match, x, y = links[0]
@@ -241,7 +242,7 @@ def click_link(target_text, timeout=5):
 
         print(f"Best match: {best_match} (Confidence: {confidence:.2f})")
 
-        if confidence > 0.7:  # Adjusted threshold
+        if confidence > 0.79:
             print(f"Clicking link: {best_match} at ({x}, {y})")
             pyautogui.moveTo(x, y, duration=0.3)
             pyautogui.click()

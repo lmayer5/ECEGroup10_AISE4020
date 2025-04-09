@@ -3,6 +3,7 @@ import speech_recognition as sr
 from voice_recognition import get_working_microphone, listen_for_wake_word, recognize_speech
 from commands import execute_command
 
+
 def listen_and_recognize():
     """Handles voice commands using a wake word."""
     mic_index = get_working_microphone()
@@ -13,17 +14,15 @@ def listen_and_recognize():
     recognizer = sr.Recognizer()
     with sr.Microphone(device_index=mic_index) as source:
         recognizer.adjust_for_ambient_noise(source)
-        print("Ready to listen... Say 'Opal' to activate.")
+        print("Ready to listen... Say 'test' to activate.")
 
         while True:
-            # Wait for "Opal"
-            listen_for_wake_word(source, recognizer)  # Fixed function call
+            listen_for_wake_word(source, recognizer)
 
-            # Once detected, listen for commands
             print("Wake word detected! Listening for command...")
 
             last_speech_time = time.time()
-            active_duration = 10  # Listen for commands for 10 seconds after wake word
+            active_duration = 15  # Listen for commands for 10 seconds after wake word
             
             while time.time() - last_speech_time < active_duration:
                 recognized_text = recognize_speech(source, recognizer)

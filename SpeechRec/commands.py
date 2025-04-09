@@ -11,7 +11,7 @@ def highlight_tabs(positions):
         cv2.putText(img, str(i+1), (x+10, y), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)  # Label tabs
     
     cv2.imshow("Detected Tabs", img)
-    cv2.waitKey(2000)  # Show for 3 seconds
+    cv2.waitKey(10000)  # Show for 3 seconds
     cv2.destroyAllWindows()
 
 def execute_command(recognized_word, confidence):
@@ -26,9 +26,9 @@ def execute_command(recognized_word, confidence):
 
     if "close tab" in recognized_word and confidence > 0.6:
         print("Detecting close buttons...")
-        x_buttons = find_all_icons_on_screen(r"C:\Users\Aidan\Desktop\Chrome Icons\closetab.png")
-        x_buttons = find_all_icons_on_screen(r"C:\Users\Aidan\Desktop\Chrome Icons\closetab2.png")
-
+        x_buttons = find_all_icons_on_screen(r"C:\Users\aidan\OneDrive\Desktop\SpeechRec\Chrome Icons\closetab.png")
+        x_buttons = find_all_icons_on_screen(r"C:\Users\aidan\OneDrive\Desktop\SpeechRec\Chrome Icons\closetab2.png")
+        x_buttons = sorted(set(x_buttons), key=lambda pos: pos[0])  
         if not x_buttons:
             print("No close buttons found.")
             return

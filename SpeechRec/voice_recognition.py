@@ -18,7 +18,7 @@ def get_working_microphone():
 
 def listen_for_wake_word(source, recognizer):
     """Listens continuously for the wake word 'Opal'."""
-    print("Waiting for wake word: 'Opal'...")
+    print("Waiting for wake word: 'Test'...")
 
     while True:
         try:
@@ -26,7 +26,7 @@ def listen_for_wake_word(source, recognizer):
             text = recognizer.recognize_google(audio).lower()
             print(f"Detected: {text}")
 
-            if "opal" in text:
+            if "test" in text:
                 print("Wake word detected! Listening for command...")
                 return True  # Wake word detected, return to main loop
 
